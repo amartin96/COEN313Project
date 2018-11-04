@@ -25,9 +25,8 @@ public:
 	branch_update *predict (branch_info & b) {
 		bi	  = b;
 		if (b.br_flags & BR_CONDITIONAL) {
-		  u.index = 
-		    (history << (TABLE_BITS - HISTORY_LENGTH))
-		    ^ (b.address & ((1<<TABLE_BITS)-1));
+		  // u.index = (history << (TABLE_BITS - HISTORY_LENGTH))^ (b.address & ((1<<TABLE_BITS)-1));
+		  u.index = b.address %(1<<TABLE_BITS);
 		 
 		  u.direction_prediction (tab[u.index] >> 1);
 		} else {
@@ -40,11 +39,6 @@ public:
 	void update (branch_update *u, bool taken, unsigned int target) {
 		if (bi.br_flags & BR_CONDITIONAL) {
 			unsigned char	*c = &tab[((my_update*)u)->index];
-			/* if (taken) { */
-			/* 	if (*c < 3) (*c)++; */
-			/* } else { */
-			/* 	if (*c > 0) (*c)--; */
-			/* } */
 			if (taken) {
 			  switch (*c) {
 			    case 0: 
@@ -80,9 +74,6 @@ public:
 			  }
 			      
 			}
-			history <<= 1;
-			history	 |= taken;
-			history &= (1<<HISTORY_LENGTH)-1;
 		}
 	}
 };

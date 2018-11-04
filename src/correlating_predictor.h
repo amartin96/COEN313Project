@@ -10,7 +10,7 @@ public:
 	unsigned int addressIndex;
 };
 
-class my_predictor : public branch_predictor {
+class correlating_predictor : public branch_predictor {
 public:
 #define HISTORY_LENGTH	5
 #define BRANCH_INDEX_LENGTH	10
@@ -19,7 +19,7 @@ public:
 	unsigned int history;
 	unsigned char	tables[1<<HISTORY_LENGTH][1<<BRANCH_INDEX_LENGTH];
 
-	my_predictor (void) : history(0) {
+	correlating_predictor (void) : history(0) {
 		memset (tables, 0, sizeof (tables));
 	}
 
@@ -29,7 +29,7 @@ public:
 
 			// get table from history and get last 10 bits of branch address
 		  u.tableIndex = history;
-			u.addressIndex = branch_info.address & 1023
+			u.addressIndex = b.address & 1023;
 		  u.direction_prediction (tables[u.tableIndex][u.addressIndex] >> 1);
 		} else {
 			u.direction_prediction (true);
@@ -40,7 +40,7 @@ public:
 
 	void update (branch_update *u, bool taken, unsigned int target) {
 		if (bi.br_flags & BR_CONDITIONAL) {
-			unsigned char	*c = &tables[((my_update*)u)->tableIndex][(my_update*)u)->addressIndex];
+			unsigned char	*c = &tables[((my_update*)u)->tableIndex][((my_update*)u)->addressIndex];
 			if (taken) {
 			  switch (*c) {
 			    case 0:

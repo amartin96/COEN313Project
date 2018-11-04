@@ -4,7 +4,7 @@
 // Note that this predictor doesn't use the whole 32 kilobytes available
 // for the CBP-2 contest; it is just an example.
 
-class my_predictor : public branch_predictor {
+class local_predictor : public branch_predictor {
 public:
 	#DEFINE TABLE_BITS 15
 	my_update	u;

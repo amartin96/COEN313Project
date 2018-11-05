@@ -4,7 +4,7 @@
 // Note that this predictor doesn't use the whole 32 kilobytes available
 // for the CBP-2 contest; it is just an example.
 
-class my_update : public branch_update {
+class correlating_update : public branch_update {
 public:
 	unsigned int tableIndex;
 	unsigned int addressIndex;
@@ -40,7 +40,7 @@ public:
 
 	void update (branch_update *u, bool taken, unsigned int target) {
 		if (bi.br_flags & BR_CONDITIONAL) {
-			unsigned char	*c = &tables[((my_update*)u)->tableIndex][((my_update*)u)->addressIndex];
+			unsigned char	*c = &tables[((correlating_update*)u)->tableIndex][((correlating_update*)u)->addressIndex];
 			if (taken) {
 			  switch (*c) {
 			    case 0:

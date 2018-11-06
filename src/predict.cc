@@ -29,7 +29,7 @@ int main (int argc, char *argv[]) {
 
 	// initialize competitor's branch prediction code
 
-	branch_predictor *p = new my_predictor ();
+	branch_predictor *p = new correlating_predictor ();
 
 	// some statistics to keep, currently just for conditional branches
 

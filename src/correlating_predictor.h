@@ -14,7 +14,7 @@ class correlating_predictor : public branch_predictor {
 public:
 #define HISTORY_LENGTH	5
 #define BRANCH_INDEX_LENGTH	10
-	my_update	u;
+        correlating_update	u;
 	branch_info	bi;
 	unsigned int history;
 	unsigned char	tables[1<<HISTORY_LENGTH][1<<BRANCH_INDEX_LENGTH];

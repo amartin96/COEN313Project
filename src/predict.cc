@@ -33,8 +33,8 @@ int main (int argc, char *argv[]) {
 
 	// branch_predictor *p = new my_predictor ();
 	// branch_predictor *p = new local_predictor ();
-	// branch_predictor *p = new correlating_predictor ();
-	branch_predictor *p = new tournament_predictor ();
+	branch_predictor *p = new correlating_predictor ();
+	// branch_predictor *p = new tournament_predictor ();
 
 	// some statistics to keep, currently just for conditional branches
 

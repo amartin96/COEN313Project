@@ -11,8 +11,8 @@ public:
 
 class my_predictor : public branch_predictor {
 public:
-#define HISTORY_LENGTH	15
-#define TABLE_BITS	15
+
+#define TABLE_BITS	15		// needs to be varied from 15-20
 	my_update	u;
 	branch_info	bi;
 	unsigned int	history;
@@ -25,8 +25,7 @@ public:
 	branch_update *predict (branch_info & b) {
 		bi	  = b;
 		if (b.br_flags & BR_CONDITIONAL) {
-		  // u.index = (history << (TABLE_BITS - HISTORY_LENGTH))^ (b.address & ((1<<TABLE_BITS)-1));
-		  u.index = b.address %(1<<TABLE_BITS);
+		  u.index = b.address % (1<<TABLE_BITS);
 		 
 		  u.direction_prediction (tab[u.index] >> 1);
 		} else {

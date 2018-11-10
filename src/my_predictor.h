@@ -4,38 +4,32 @@
 // Note that this predictor doesn't use the whole 32 kilobytes available
 // for the CBP-2 contest; it is just an example.
 
-#include <cstdint>
-#define HISTORY_LENGTH	        5
-#define BRANCH_INDEX_LENGTH	10
-
-struct table_entry {
-    uint8_t history;                        // using HISTORY_LENGTH bits
-    uint8_t predictions[1 << HISTORY_LENGTH];   // a prediction for each possible history
+class my_update : public branch_update {
+public:
+	unsigned int	index;
 };
 
-class correlating_update : public branch_update {
+class my_predictor : public branch_predictor {
 public:
-	unsigned int tableIndex;
-	unsigned int addressIndex;
-};
-
-class correlating_predictor : public branch_predictor {
-public:
-	correlating_update	u;
+#define HISTORY_LENGTH	15
+#define TABLE_BITS	15
+	my_update	u;
 	branch_info	bi;
-        table_entry tables[1 << BRANCH_INDEX_LENGTH];
+	unsigned int	history;
+	unsigned char	tab[1<<TABLE_BITS];
 
-	correlating_predictor () {
-		memset (tables, 0, sizeof (tables));
+	my_predictor (void) : history(0) { 
+		memset (tab, 0, sizeof (tab));
 	}
 
 	branch_update *predict (branch_info & b) {
-	        bi = b;
+		bi	  = b;
 		if (b.br_flags & BR_CONDITIONAL) {
-		    // get table from history and get last 10 bits of branch address
-		    u.addressIndex = b.address & 1023;
-		    u.tableIndex = tables[u.addressIndex].history;
-		    u.direction_prediction (tables[u.addressIndex].predictions[u.tableIndex]);
+		  u.index = 
+		    (history << (TABLE_BITS - HISTORY_LENGTH))
+		    ^ (b.address & ((1<<TABLE_BITS)-1));
+		 
+		  u.direction_prediction (tab[u.index] >> 1);
 		} else {
 			u.direction_prediction (true);
 		}
@@ -43,48 +37,52 @@ public:
 		return &u;
 	}
 
-	void update (correlating_update *u, bool taken, unsigned int target) {
+	void update (branch_update *u, bool taken, unsigned int target) {
 		if (bi.br_flags & BR_CONDITIONAL) {
-			// unsigned char	*c = &tables[((correlating_update*)u)->tableIndex][((correlating_update*)u)->addressIndex];
-                        uint8_t &prediction = tables[u->addressIndex].predictions[u->tableIndex];
+			unsigned char	*c = &tab[((my_update*)u)->index];
+			/* if (taken) { */
+			/* 	if (*c < 3) (*c)++; */
+			/* } else { */
+			/* 	if (*c > 0) (*c)--; */
+			/* } */
 			if (taken) {
-			  switch (prediction) {
-			    case 0b00:
-			      prediction = 0b01;
+			  switch (*c) {
+			    case 0: 
+			      *c =1; 
 			      break;
-			    case 0b01:
-                              prediction = 0b11;
+			    case 1:
+			      *c =3;
 			      break;
-			    case 0b10:
-                              prediction = 0b01;
+			    case 2:
+			      *c=3;
 			      break;
-			    case 0b11:
+			    case 3: 
 			      //do nothing
 			      break;
 			  default: ; //should print error
 			  }
 			}
 			else {
-			  switch (prediction) {
-			    case 0b00:
+			  switch (*c) {
+			    case 0: 
 			      //do nothing
 			      break;
-			    case 0b01:
-                              prediction = 0b10;
+			    case 1:
+			      *c = 0;
 			      break;
-			    case 0b10:
-                              prediction = 0b00;
+			    case 2:
+			      *c= 0;
 			      break;
-			    case 0b11:
-                              prediction = 0b10;
+			    case 3: 
+			      *c=2;
 			      break;
 			  default: ; //should print error
 			  }
-
+			      
 			}
-			tables[u->addressIndex].history <<= 1;
-			tables[u->addressIndex].history	 |= taken;
-			tables[u->addressIndex].history &= (1<<HISTORY_LENGTH)-1;
+			history <<= 1;
+			history	 |= taken;
+			history &= (1<<HISTORY_LENGTH)-1;
 		}
 	}
 };

@@ -13,6 +13,7 @@
 #include "trace.h"
 #include "predictor.h"
 #include "my_predictor.h"
+#include "custom_predictor.h"
 
 int main (int argc, char *argv[]) {
 
@@ -29,7 +30,7 @@ int main (int argc, char *argv[]) {
 
 	// initialize competitor's branch prediction code
 
-	branch_predictor *p = new correlating_predictor ();
+	branch_predictor *p = new custom_predictor ();
 
 	// some statistics to keep, currently just for conditional branches
 

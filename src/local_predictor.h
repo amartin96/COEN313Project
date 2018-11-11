@@ -4,15 +4,20 @@
 // Note that this predictor doesn't use the whole 32 kilobytes available
 // for the CBP-2 contest; it is just an example.
 
+class local_update : public branch_update {
+public:
+	unsigned int	index;
+};
+
 class local_predictor : public branch_predictor {
 public:
-	#DEFINE TABLE_BITS 15
-	my_update	u;
+	#define TABLE_BITS 15
+	local_update	u;
 	branch_info	bi;
 	unsigned int	history;
 	unsigned char	tab[1<<TABLE_BITS];
 
-	my_predictor (void) : history(0) {
+	local_predictor (void) : history(0) {
 		memset (tab, 0, sizeof (tab));
 	}
 
@@ -31,7 +36,7 @@ public:
 
 	void update (branch_update *u, bool taken, unsigned int target) {
 		if (bi.br_flags & BR_CONDITIONAL) {
-			unsigned char	*c = &tab[((my_update*)u)->index];
+			unsigned char	*c = &tab[((local_update*)u)->index];
 			if (taken) {
 			  switch (*c) {
 			    case 0:

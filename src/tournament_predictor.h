@@ -4,8 +4,8 @@
 // Note that this predictor doesn't use the whole 32 kilobytes available
 // for the CBP-2 contest; it is just an example.
 
-// #include "local_predictor.h"
-// #include "my_predictor.h"
+#include "local_predictor.h"
+#include "my_predictor.h"
 
 class tournament_update : public branch_update {
 public:
@@ -36,7 +36,7 @@ public:
 	bool currentGsharePrediction;
 
 
-	tournamnet_predictor (void) : history(0) {
+	tournament_predictor (void) {
 		localHistory = 0;
 		gshareHistory = 0;
 		localSuccess = 0;
@@ -48,8 +48,8 @@ public:
 	branch_update *predict (branch_info &b) {
 		bi = b;
 		// get predictions
-		currentLocalPrediction = local->predict(b)).direction_prediction();
-		currentGsharePrediction = gshare->predict(b)).direction_prediction();
+		currentLocalPrediction = (local->predict(b))->direction_prediction();
+		currentGsharePrediction = (gshare->predict(b))->direction_prediction();
 		if (b.br_flags & BR_CONDITIONAL) {
 		  if(localHistory >= gshareHistory) {
 				// use local predictor
@@ -72,9 +72,9 @@ public:
 	void update (branch_update *u, bool taken, unsigned int target) {
 		int highestLocalPredictorBit = localSuccess & (1 << ((sizeof(highestLocalPredictorBit) * 8) - 1));
 		int highestGsharePredictorBit = gshareSuccess & (1 << ((sizeof(highestGsharePredictorBit) * 8) - 1));
-		tournament_update* update = (tournament_update*) u;
+		//tournament_update* update = (tournament_update*) u;
 		// branch was predicted correctly
-		if(update->taken) {
+		if(taken) {
 			// update local predictor if local prediction was 1 (correct)
 			if(currentLocalPrediction) {
 				// local predictor history shift register has highest bit of 1

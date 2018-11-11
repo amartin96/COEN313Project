@@ -17,7 +17,7 @@ public:
         correlating_update	u;
 	branch_info	bi;
 	unsigned int history;
-	unsigned char	tables[1<<HISTORY_LENGTH][1<<BRANCH_INDEX_LENGTH];
+	unsigned char tables[1<<HISTORY_LENGTH][1<<BRANCH_INDEX_LENGTH];
 
 	correlating_predictor (void) : history(0) {
 		memset (tables, 0, sizeof (tables));

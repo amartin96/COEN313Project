@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <string.h> // in case you want to use e.g. memset
 #include <assert.h>
+#include <cstdint>
+#include <iostream>
+#include <fstream>
 
 #include "branch.h"
 #include "trace.h"
@@ -42,13 +45,17 @@ int main (int argc, char *argv[]) {
 
 	// some statistics to keep, currently just for conditional branches
 
-	long long int
+	uintmax_t
+		dmiss_per_1mill = 0,
 		tmiss = 0, 	// number of target mispredictions
 		dmiss = 0; 	// number of direction mispredictions
 
+	std::ofstream outfile;
+	outfile.open("out.txt", std::ios::out | std::ios::app);
+
 	// keep looping until end of file
 
-	for (;;) {
+	for (uintmax_t i = 0;;i++) {
 
 		// get a trace
 
@@ -69,7 +76,7 @@ int main (int argc, char *argv[]) {
 			// count a direction misprediction
 
 			dmiss += u->direction_prediction () != t->taken;
-
+			dmiss_per_1mill += u->direction_prediction () != t->taken;
 			// count a target misprediction
 
 			tmiss += u->target_prediction () != t->target;
@@ -78,6 +85,13 @@ int main (int argc, char *argv[]) {
 		// update competitor's state
 
 		p->update (u, t->taken, t->target);
+		
+		if (i % 1000000 == 0) {
+			outfile << dmiss_per_1mill << std::endl;
+			dmiss_per_1mill = 0;
+		}
+		// printf("Misses after 1e8 branches: %ju", dmiss);
+
 	}
 
 	// done reading traces
@@ -89,5 +103,6 @@ int main (int argc, char *argv[]) {
 
 	printf ("%0.3f MPKI\n", 1000.0 * (dmiss / 1e8));
 	delete p;
+	outfile.close();
 	exit (0);
 }

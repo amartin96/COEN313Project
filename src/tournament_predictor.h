@@ -19,14 +19,6 @@ public:
 	tournament_update	u;
 	branch_info	bi;
 
-	// bit shift histories of the success of local and gshare predictors
-	unsigned long	localHistory;
-	unsigned long gshareHistory;
-
-	// current counts of successes of local and gshare predictors
-	unsigned int localSuccess;
-	unsigned int gshareSuccess;
-
 	// local and gshare predictor objects
 	branch_predictor *local;
 	branch_predictor *gshare;
@@ -35,12 +27,16 @@ public:
 	bool currentLocalPrediction;
 	bool currentGsharePrediction;
 
+	/*current state
+		strong local: 3
+		weak local: 2
+		weak gshare: 1
+		strong gshare: 0
+	*/
+	int currentState;
 
 	tournament_predictor (void) {
-		localHistory = 0;
-		gshareHistory = 0;
-		localSuccess = 0;
-		gshareSuccess = 0;
+		currentState = 2;
 		local = new local_predictor();
 		gshare = new my_predictor();
 	}
@@ -51,7 +47,7 @@ public:
 		currentLocalPrediction = (local->predict(b))->direction_prediction();
 		currentGsharePrediction = (gshare->predict(b))->direction_prediction();
 		if (b.br_flags & BR_CONDITIONAL) {
-		  if(localHistory >= gshareHistory) {
+		  if(currentState >= 2) {
 				// use local predictor
 				u.chosenPredictor = 0;
 				// make the guess
@@ -70,108 +66,128 @@ public:
 	}
 
 	void update (branch_update *u, bool taken, unsigned int target) {
-		int highestLocalPredictorBit = localSuccess & (1 << ((sizeof(highestLocalPredictorBit) * 8) - 1));
-		int highestGsharePredictorBit = gshareSuccess & (1 << ((sizeof(highestGsharePredictorBit) * 8) - 1));
-		//tournament_update* update = (tournament_update*) u;
-		// branch was predicted correctly
-		if(taken) {
-			// update local predictor if local prediction was 1 (correct)
-			if(currentLocalPrediction) {
-				// local predictor history shift register has highest bit of 1
-				if(highestLocalPredictorBit) {
-					// shift 1 to the left and add one on the right
-					localHistory <<= 1;
-					localHistory += 1;
-				} else {
-					// shift 1 to the left and add one on the right, as well as add additional success
-					localHistory <<= 1;
-					localHistory += 1;
-					localSuccess += 1;
+			// int highestLocalPredictorBit = localSuccess & (1 << ((sizeof(highestLocalPredictorBit) * 8) - 1));
+			// int highestGsharePredictorBit = gshareSuccess & (1 << ((sizeof(highestGsharePredictorBit) * 8) - 1));
+			tournament_update* update = (tournament_update*) u;
+			// branch was predicted correctly
+			if(update->chosenPredictor == 0) {
+				if(currentState == 3) {
+					if(taken) {
+						// it remains strong local (1,0), (1,1)
+					} else {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// it remains weak local (0,0)
+						} else {
+							// changes to weak local (0,1)
+							currentState = 2;
+						}
+					}
+				} else if(currentState == 2) {
+					if(taken) {
+						if(currentLocalPrediction != currentGsharePrediction) {
+							// changes to strong local (1,0)
+							currentState = 3;
+						} else {
+							// it remains the same (1,1)
+						}
+					} else {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// it remains the same (0,0)
+						} else {
+							// changes to strong gshare (0,1)
+							currentState = 0;
+						}
+					}
+				} else if(currentState == 1) {
+					if(taken) {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// remains the same (1,1)
+						} else {
+							// changes to strong local (1,0)
+							currentState = 3;
+						}
+					} else {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// remains the same (0,0)
+						} else {
+							// changes to strong gshare (0,1)
+							currentState = 0;
+						}
+					}
+				} else if(currentState == 0) {
+					if(taken) {
+						if(currentLocalPrediction != currentGsharePrediction) {
+							// changes to weak gshare (1,0)
+							currentState = 1;
+						} else {
+							// remains the same (1,1)
+						}
+					} else {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// remains the same (0,0)
+						} else {
+							// remains the same (0,1)
+						}
+					}
 				}
-			} else {
-				// local predictor history shift register has highest bit of 1
-				if(highestLocalPredictorBit) {
-					// shift 1 to the left, leave 0 on the right, and subtract 1 success
-					localHistory <<= 1;
-					localSuccess -= 1;
+			} else if(update->chosenPredictor == 1) {
+				if(currentState == 0) {
+					if(taken) {
+						// it remains strong gshare (0,1), (1,1)
+					} else {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// it remains weak local (0,0)
+						} else {
+							// changes to weak gshare (1,0)
+							currentState = 1;
+						}
+					}
+				} else if(currentState == 1) {
+					if(taken) {
+						if(currentLocalPrediction != currentGsharePrediction) {
+							// changes to strong local (0,1)
+							currentState = 0;
+						} else {
+							// it remains the same (1,1)
+						}
+					} else {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// it remains the same (0,0)
+						} else {
+							// changes to strong gshare (1,0)
+							currentState = 3;
+						}
+					}
+				} else if(currentState == 2) {
+					if(taken) {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// remains the same (1,1)
+						} else {
+							// changes to strong local (0,1)
+							currentState = 0;
+						}
+					} else {
+						if(currentLocalPrediction == currentGsharePrediction) {
+							// remains the same (0,0)
+						} else {
+							// changes to strong gshare (1,0)
+							currentState = 3;
+						}
+					}
+			} else if(currentState == 3) {
+				if(taken) {
+					if(currentLocalPrediction == currentGsharePrediction) {
+						// remains the same (1,1)
+					} else {
+						// changes to weak gshare (0,1)
+						currentState = 2;
+					}
 				} else {
-					// shift 1 to the left, leave 0 on the right, and don't change success
-					localHistory <<= 1;
-				}
-			}
-
-			// update gshare predictor if gshare prediction was 1 (correct)
-			if(currentGsharePrediction) {
-				// local predictor history shift register has highest bit of 1
-				if(highestGsharePredictorBit) {
-					// shift 1 to the left and add one on the right
-					gshareHistory <<= 1;
-					gshareHistory += 1;
-				} else {
-					// shift 1 to the left and add one on the right, as well as add additional success
-					gshareHistory <<= 1;
-					gshareHistory += 1;
-					gshareSuccess += 1;
-				}
-			} else {
-				// local predictor history shift register has highest bit of 1
-				if(highestGsharePredictorBit) {
-					// shift 1 to the left, leave 0 on the right, and subtract 1 success
-					gshareHistory <<= 1;
-					gshareSuccess -= 1;
-				} else {
-					// shift 1 to the left, leave 0 on the right, and don't change success
-					gshareHistory <<= 1;
-				}
-			}
-		} else {
-			// update local predictor if local prediction was 1 (incorrect)
-			if(currentLocalPrediction) {
-				// local predictor history shift register has highest bit of 1
-				if(highestLocalPredictorBit) {
-					// shift 1 to the left, leave 0 on the right, subtract 1 success
-					localHistory <<= 1;
-					localHistory -= 1;
-				} else {
-					// shift 1 to the left, leave 0 on the right
-					localHistory <<= 1;
-				}
-			} else {
-				// local predictor history shift register has highest bit of 1
-				if(highestLocalPredictorBit) {
-					// shift 1 to the left, add 1 on the right, leave successes
-					localHistory <<= 1;
-					localHistory += 1;
-				} else {
-					// shift 1 to the left, add 1 on the right, add 1 to successes
-					localHistory <<= 1;
-					localHistory += 1;
-					localSuccess += 1;
-				}
-			}
-
-			// update gshare predictor if local prediction was 1 (incorrect)
-			if(currentGsharePrediction) {
-				// local predictor history shift register has highest bit of 1
-				if(highestGsharePredictorBit) {
-					// shift 1 to the left, leave 0 on the right, subtract 1 success
-					gshareHistory <<= 1;
-					gshareSuccess -= 1;
-				} else {
-					// shift 1 to the left, leave 0 on the right
-					gshareHistory <<= 1;
-				}
-			} else {
-				// local predictor history shift register has highest bit of 1
-				if(highestGsharePredictorBit) {
-					// shift 1 to the left, add 1 on the right, leave successes
-					gshareHistory <<= 1;
-					gshareHistory += 1;
-				} else {
-					// shift 1 to the left, add 1 on the right, add 1 to successes
-					gshareHistory <<= 1;
-					gshareHistory += 1;
-					gshareSuccess += 1;
+					if(currentLocalPrediction == currentGsharePrediction) {
+						// remains the same (0,0)
+					} else {
+						// remains the same (1,0)
+					}
 				}
 			}
 		}

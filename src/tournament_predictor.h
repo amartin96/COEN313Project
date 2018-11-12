@@ -7,11 +7,6 @@
 #include "local_predictor.h"
 #include "my_predictor.h"
 
-enum PredictorType {
-    LOCAL,
-    GSHARE
-};
-
 enum TournamentState {
     STRONG_LOCAL,
     WEAK_LOCAL,
@@ -21,7 +16,6 @@ enum TournamentState {
 
 class tournament_update : public branch_update {
 public:
-    PredictorType chosenPredictor;
     local_update* localUpdate;
     my_update* gshareUpdate;
 };
@@ -39,9 +33,10 @@ public:
     bool currentLocalPrediction;
     bool currentGsharePrediction;
 
+    // current state for the tournament predictor
     TournamentState currentState;
 
-    tournament_predictor (void) {
+    tournament_predictor () {
         currentState = WEAK_GSHARE;
     }
 
@@ -56,14 +51,8 @@ public:
             currentGsharePrediction = u.gshareUpdate->direction_prediction();
 
             if(currentState == STRONG_LOCAL || currentState == WEAK_LOCAL) {
-                // use local predictor
-                u.chosenPredictor = LOCAL;
-                // make the guess
                 u.direction_prediction (currentLocalPrediction);
             } else {
-                // use gshare
-                u.chosenPredictor = GSHARE;
-                // make the guess
                 u.direction_prediction (currentGsharePrediction);
             }
         } else {
@@ -84,8 +73,8 @@ public:
             switch (currentState) {
 
                 case STRONG_LOCAL:
-                    if ((!local_correct && !gshare_correct) || local_correct) /* do nothing */;    // 00, 10, 11
-                    else currentState = WEAK_LOCAL;                                              // 01
+                    if ((!local_correct && !gshare_correct) || local_correct) /* do nothing */; // 00, 10, 11
+                    else currentState = WEAK_LOCAL;                                             // 01
                     break;
 
                 case WEAK_LOCAL:
@@ -101,7 +90,7 @@ public:
                     break;
 
                 case STRONG_GSHARE:
-                    if ((!local_correct && !gshare_correct) || gshare_correct) /* do nothing */;  // 00, 01, 11
+                    if ((!local_correct && !gshare_correct) || gshare_correct) /* do nothing */;// 00, 01, 11
                     else currentState = WEAK_GSHARE;                                            // 10
                     break;
             }

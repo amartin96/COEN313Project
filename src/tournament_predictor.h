@@ -11,6 +11,11 @@ class tournament_update : public branch_update {
 public:
 	// 0 is local, 1 is gshare
 	unsigned int chosenPredictor;
+	// update from local predictor
+	local_update* localUpdate;
+	// update from gshare my_predictor
+	my_update* gshareUpdate;
+
 };
 
 class tournament_predictor : public branch_predictor {
@@ -44,8 +49,10 @@ public:
 	branch_update *predict (branch_info &b) {
 		bi = b;
 		// get predictions
-		currentLocalPrediction = (local->predict(b))->direction_prediction();
-		currentGsharePrediction = (gshare->predict(b))->direction_prediction();
+		u.localUpdate = (local_update*) local->predict(b);
+		currentLocalPrediction = (u.localUpdate)->direction_prediction();
+		u.gshareUpdate = (my_update*) gshare->predict(b);
+		currentGsharePrediction = (u.gshareUpdate)->direction_prediction();
 		if (b.br_flags & BR_CONDITIONAL) {
 		  if(currentState >= 2) {
 				// use local predictor
@@ -69,6 +76,8 @@ public:
 			// int highestLocalPredictorBit = localSuccess & (1 << ((sizeof(highestLocalPredictorBit) * 8) - 1));
 			// int highestGsharePredictorBit = gshareSuccess & (1 << ((sizeof(highestGsharePredictorBit) * 8) - 1));
 			tournament_update* update = (tournament_update*) u;
+			local->update(update->localUpdate,taken,target);
+			gshare->update(update->gshareUpdate,taken,target);
 			// branch was predicted correctly
 			if(update->chosenPredictor == 0) {
 				if(currentState == 3) {

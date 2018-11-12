@@ -5,7 +5,7 @@
 // for the CBP-2 contest; it is just an example.
 
 #include <cstdint>
-#define CUSTOM_HISTORY_LENGTH	        5
+#define CUSTOM_HISTORY_LENGTH 5
 #define BRANCH_INDEX_LENGTH	10
 
 struct table_entry {
@@ -21,16 +21,16 @@ public:
 
 class custom_predictor : public branch_predictor {
 public:
-	custom_update	u;
+	custom_update u;
 	branch_info	bi;
-        table_entry tables[1 << BRANCH_INDEX_LENGTH];
+    table_entry tables[1 << BRANCH_INDEX_LENGTH];
 
 	custom_predictor () {
 		memset (tables, 0, sizeof (tables));
 	}
 
 	branch_update *predict (branch_info & b) {
-	        bi = b;
+	    bi = b;
 		if (b.br_flags & BR_CONDITIONAL) {
 		    // get table from history and get last 10 bits of branch address
 		    u.addressIndex = b.address & 1023;
@@ -48,42 +48,42 @@ public:
 			// unsigned char	*c = &tables[((correlating_update*)u)->tableIndex][((correlating_update*)u)->addressIndex];
                         uint8_t &prediction = tables[u->addressIndex].predictions[u->tableIndex];
 			if (taken) {
-			  switch (prediction) {
-			    case 0b00:
-			      prediction = 0b01;
-			      break;
-			    case 0b01:
-                              prediction = 0b11;
-			      break;
-			    case 0b10:
-                              prediction = 0b01;
-			      break;
+			    switch (prediction) {
+                case 0b00:
+			        prediction = 0b01;
+			        break;
+                case 0b01:
+                    prediction = 0b11;
+                    break;
+                case 0b10:
+                    prediction = 0b01;
+                    break;
 			    case 0b11:
-			      //do nothing
-			      break;
-			  default: ; //should print error
-			  }
+                    //do nothing
+                    break;
+                default: ; //should print error
+                }
 			}
 			else {
-			  switch (prediction) {
-			    case 0b00:
-			      //do nothing
-			      break;
+                switch (prediction) {
+                case 0b00:
+                    //do nothing
+                    break;
 			    case 0b01:
-                              prediction = 0b10;
-			      break;
+                    prediction = 0b10;
+                    break;
 			    case 0b10:
-                              prediction = 0b00;
-			      break;
+                    prediction = 0b00;
+                    break;
 			    case 0b11:
-                              prediction = 0b10;
-			      break;
-			  default: ; //should print error
-			  }
+                    prediction = 0b10;
+                    break;
+                default: ; //should print error
+                }
 
 			}
 			tables[u->addressIndex].history <<= 1;
-			tables[u->addressIndex].history	 |= taken;
+			tables[u->addressIndex].history	|= taken;
 			tables[u->addressIndex].history &= (1<<CUSTOM_HISTORY_LENGTH)-1;
 		}
 	}

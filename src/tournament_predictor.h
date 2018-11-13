@@ -73,132 +73,67 @@ public:
 	}
 
 	void update (branch_update *u, bool taken, unsigned int target) {
-			// int highestLocalPredictorBit = localSuccess & (1 << ((sizeof(highestLocalPredictorBit) * 8) - 1));
-			// int highestGsharePredictorBit = gshareSuccess & (1 << ((sizeof(highestGsharePredictorBit) * 8) - 1));
 			tournament_update* update = (tournament_update*) u;
 			local->update(update->localUpdate,taken,target);
 			gshare->update(update->gshareUpdate,taken,target);
-			// branch was predicted correctly
-			if(update->chosenPredictor == 0) {
-				if(currentState == 3) {
-					if(taken) {
-						// it remains strong local (1,0), (1,1)
-					} else {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// it remains weak local (0,0)
-						} else {
-							// changes to weak local (0,1)
-							currentState = 2;
-						}
-					}
-				} else if(currentState == 2) {
-					if(taken) {
-						if(currentLocalPrediction != currentGsharePrediction) {
-							// changes to strong local (1,0)
-							currentState = 3;
-						} else {
-							// it remains the same (1,1)
-						}
-					} else {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// it remains the same (0,0)
-						} else {
-							// changes to strong gshare (0,1)
-							currentState = 0;
-						}
-					}
-				} else if(currentState == 1) {
-					if(taken) {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// remains the same (1,1)
-						} else {
-							// changes to strong local (1,0)
-							currentState = 3;
-						}
-					} else {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// remains the same (0,0)
-						} else {
-							// changes to strong gshare (0,1)
-							currentState = 0;
-						}
-					}
-				} else if(currentState == 0) {
-					if(taken) {
-						if(currentLocalPrediction != currentGsharePrediction) {
-							// changes to weak gshare (1,0)
-							currentState = 1;
-						} else {
-							// remains the same (1,1)
-						}
-					} else {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// remains the same (0,0)
-						} else {
-							// remains the same (0,1)
-						}
-					}
+
+			switch (currentState) {
+			case (3):
+				if (currentLocalPrediction == taken && currentGsharePrediction == taken) { // 11
+						;
 				}
-			} else if(update->chosenPredictor == 1) {
-				if(currentState == 0) {
-					if(taken) {
-						// it remains strong gshare (0,1), (1,1)
-					} else {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// it remains weak local (0,0)
-						} else {
-							// changes to weak gshare (1,0)
-							currentState = 1;
-						}
-					}
-				} else if(currentState == 1) {
-					if(taken) {
-						if(currentLocalPrediction != currentGsharePrediction) {
-							// changes to strong local (0,1)
-							currentState = 0;
-						} else {
-							// it remains the same (1,1)
-						}
-					} else {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// it remains the same (0,0)
-						} else {
-							// changes to strong gshare (1,0)
-							currentState = 3;
-						}
-					}
-				} else if(currentState == 2) {
-					if(taken) {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// remains the same (1,1)
-						} else {
-							// changes to strong local (0,1)
-							currentState = 0;
-						}
-					} else {
-						if(currentLocalPrediction == currentGsharePrediction) {
-							// remains the same (0,0)
-						} else {
-							// changes to strong gshare (1,0)
-							currentState = 3;
-						}
-					}
-			} else if(currentState == 3) {
-				if(taken) {
-					if(currentLocalPrediction == currentGsharePrediction) {
-						// remains the same (1,1)
-					} else {
-						// changes to weak gshare (0,1)
+				else if (currentLocalPrediction != taken && currentGsharePrediction != taken) { // 00
+						;
+				}
+				else if (currentLocalPrediction == taken && currentGsharePrediction != taken) { // 10
+						;
+				}
+				else if (currentLocalPrediction != taken && currentGsharePrediction == taken) { // 01
 						currentState = 2;
-					}
-				} else {
-					if(currentLocalPrediction == currentGsharePrediction) {
-						// remains the same (0,0)
-					} else {
-						// remains the same (1,0)
-					}
 				}
+				break;
+			case (2):
+				if (currentLocalPrediction == taken && currentGsharePrediction == taken) { // 11
+						;
+				}
+				else if (currentLocalPrediction != taken && currentGsharePrediction != taken) { // 00
+						;
+				}
+				else if (currentLocalPrediction == taken && currentGsharePrediction != taken) { // 10
+						currentState = 3;
+				}
+				else if (currentLocalPrediction != taken && currentGsharePrediction == taken) { // 01
+						currentState = 0;
+				}
+				break;
+			case (1):
+				if (currentLocalPrediction == taken && currentGsharePrediction == taken) { // 11
+						;
+				}
+				else if (currentLocalPrediction != taken && currentGsharePrediction != taken) { // 00
+						;
+				}
+				else if (currentLocalPrediction == taken && currentGsharePrediction != taken) { // 10
+						currentState = 3;
+				}
+				else if (currentLocalPrediction != taken && currentGsharePrediction == taken) { // 01
+						currentState = 0;
+				}
+				break;
+			case (0):
+				if (currentLocalPrediction == taken && currentGsharePrediction == taken) { // 11
+						;
+				}
+				else if (currentLocalPrediction != taken && currentGsharePrediction != taken) { // 00
+						;
+				}
+				else if (currentLocalPrediction == taken && currentGsharePrediction != taken) { // 10
+						currentState = 1;
+				}
+				else if (currentLocalPrediction != taken && currentGsharePrediction == taken) { // 01
+						;
+				}
+				break;
 			}
-		}
 	}
 };

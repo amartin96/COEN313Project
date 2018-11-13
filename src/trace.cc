@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <string>
 
 #include "branch.h"
 #include "trace.h"
@@ -419,7 +420,7 @@ trace *read_trace (void) {
 #define BZIP2_MAGIC	"BZ"
 
 void init_trace (char *fname) {
-	char *dc;
+	std::string dc;
 	char s[2] = { 0, 0 };
 	char cmd[1000];
 
@@ -440,7 +441,7 @@ void init_trace (char *fname) {
 
 	// make a command that will decompress the file to stdout
 
-	sprintf (cmd, "%s %s", dc, fname);
+	sprintf (cmd, "%s %s", dc.c_str(), fname);
 
 	// pipe that stdout to tracefp
 
